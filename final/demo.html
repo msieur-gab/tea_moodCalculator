@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mooder.js Capabilities Demo - Tie Guan Yin</title>
+    <script type="module">
+        import { 
+            createGranularMoodProfile,
+            calculateTeaMood, 
+            getMoodDescription, 
+            recommendTeaByMood, 
+            createMoodPairingGuide, 
+            getSeasonalMoodCorrelation, 
+            analyzeMoodComplexity 
+        } from './mooder.js';
+
+        // Sample tea data
+        const tieGuanYin = {
+            name: "Tie Guan Yin",
+            originalName: "铁观音 (Tiě Guānyīn)",
+            type: "oolong",
+            origin: "Anxi, Fujian, China",
+            caffeineLevel: 4,
+            lTheanineLevel: 7,
+            flavorProfile: ["orchid", "mineral", "floral", "cream"],
+            processingMethods: ["withered", "bruised", "partial-oxidation", "rolled", "roasted"]
+        };
+
+        // Function to update all displays
+        function updateDisplays() {
+            // Basic Mood Calculation
+            const moodResult = calculateTeaMood(tieGuanYin);
+            document.getElementById('basicMood').innerHTML = `
+                <h3>Primary Mood: ${moodResult.primary.title}</h3>
+                <p>${moodResult.primary.description}</p>
+                <div class="mood-bar">
+                    <div class="mood-fill" style="width: ${moodResult.primary.score * 10}%"></div>
+                </div>
+                <p>Score: ${moodResult.primary.score}/10</p>
+            `;
+
+            if (moodResult.secondary) {
+                document.getElementById('secondaryMood').innerHTML = `
+                    <h3>Secondary Mood: ${moodResult.secondary.title}</h3>
+                    <p>${moodResult.secondary.description}</p>
+                    <div class="mood-bar">
+                        <div class="mood-fill" style="width: ${moodResult.secondary.score * 10}%"></div>
+                    </div>
+                    <p>Score: ${moodResult.secondary.score}/10</p>
+                `;
+            }
+
+            // Detailed Mood Description
+            document.getElementById('moodDescription').textContent = getMoodDescription(tieGuanYin);
+
+            // Mood Complexity Analysis
+            const complexityResult = analyzeMoodComplexity(tieGuanYin);
+            document.getElementById('moodComplexity').innerHTML = `
+                <h3>Mood Complexity Analysis</h3>
+                <p>Active Moods: ${complexityResult.moodDiversity.totalActiveMoods}</p>
+                <h4>Top Moods:</h4>
+                <ul>
+                    ${complexityResult.moodDiversity.topMoods.map(mood => `
+                        <li>${mood.title} (${mood.score}/10)</li>
+                    `).join('')}
+                </ul>
+                <p>Balance Index: ${complexityResult.moodDiversity.moodBalance.balanceIndex.toFixed(2)}/10</p>
+            `;
+
+            // Seasonal Correlation
+            const seasonalCorrelation = getSeasonalMoodCorrelation();
+            document.getElementById('seasonalMoods').innerHTML = `
+                <h3>Seasonal Mood Correlations</h3>
+                ${Object.entries(seasonalCorrelation).map(([season, data]) => `
+                    <div class="season-card">
+                        <h4>${season.charAt(0).toUpperCase() + season.slice(1)}</h4>
+                        <p><strong>Dominant Moods:</strong> ${data.dominantMoods.join(', ')}</p>
+                        <p>${data.characteristics}</p>
+                    </div>
+                `).join('')}
+            `;
+
+            // Mood Pairings
+            const moodPairings = createMoodPairingGuide();
+            document.getElementById('moodPairings').innerHTML = `
+                <h3>Mood Pairings for Primary Mood</h3>
+                ${Object.entries(moodPairings).map(([mood, data]) => `
+                    <div class="pairing-card">
+                        <h4>${mood.charAt(0).toUpperCase() + mood.slice(1)}</h4>
+                        <p><strong>Complementary:</strong> ${data.complementary.join(', ')}</p>
+                        <ul>
+                            ${data.transitionSuggestions.map(suggestion => `
+                                <li>${suggestion.description}</li>
+                            `).join('')}
+                        </ul>
+                    </div>
+                `).join('')}
+            `;
+        }
+
+        // Initialize displays when page loads
+        document.addEventListener('DOMContentLoaded', updateDisplays);
+    </script>
+    <style>
+        :root {
+            --primary-color: #4a5568;
+            --secondary-color: #718096;
+            --accent-color: #48bb78;
+            --bg-color: #f7fafc;
+            --card-bg: #ffffff;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            line-height: 1.5;
+            margin: 0;
+            padding: 2rem;
+            background-color: var(--bg-color);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section {
+            background: var(--card-bg);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        h1, h2, h3, h4 {
+            color: var(--primary-color);
+            margin-top: 0;
+        }
+
+        .mood-bar {
+            background: #e2e8f0;
+            height: 12px;
+            border-radius: 6px;
+            overflow: hidden;
+            margin: 8px 0;
+        }
+
+        .mood-fill {
+            height: 100%;
+            background: var(--accent-color);
+            transition: width 0.3s ease;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .season-card, .pairing-card {
+            background: #f8fafc;
+            padding: 1rem;
+            border-radius: 6px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .tea-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .tea-info-item {
+            background: var(--card-bg);
+            padding: 1rem;
+            border-radius: 6px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .tag {
+            background: #e2e8f0;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Mooder.js Capabilities Demo - Tie Guan Yin</h1>
+        
+        <div class="section">
+            <div class="tea-info">
+                <div class="tea-info-item">
+                    <h3>Basic Information</h3>
+                    <p><strong>Name:</strong> Tie Guan Yin</p>
+                    <p><strong>Original Name:</strong> 铁观音 (Tiě Guānyīn)</p>
+                    <p><strong>Type:</strong> Oolong</p>
+                    <p><strong>Origin:</strong> Anxi, Fujian, China</p>
+                </div>
+                <div class="tea-info-item">
+                    <h3>Levels</h3>
+                    <p><strong>Caffeine Level:</strong> 4/10</p>
+                    <p><strong>L-Theanine Level:</strong> 7/10</p>
+                </div>
+                <div class="tea-info-item">
+                    <h3>Flavor Profile</h3>
+                    <div class="tags">
+                        <span class="tag">orchid</span>
+                        <span class="tag">mineral</span>
+                        <span class="tag">floral</span>
+                        <span class="tag">cream</span>
+                    </div>
+                </div>
+                <div class="tea-info-item">
+                    <h3>Processing Methods</h3>
+                    <div class="tags">
+                        <span class="tag">withered</span>
+                        <span class="tag">bruised</span>
+                        <span class="tag">partial-oxidation</span>
+                        <span class="tag">rolled</span>
+                        <span class="tag">roasted</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Basic Mood Analysis</h2>
+            <div id="basicMood"></div>
+            <div id="secondaryMood"></div>
+        </div>
+
+        <div class="section">
+            <h2>Detailed Mood Description</h2>
+            <p id="moodDescription"></p>
+        </div>
+
+        <div class="section">
+            <div id="moodComplexity"></div>
+        </div>
+
+        <div class="grid">
+            <div class="section">
+                <div id="seasonalMoods"></div>
+            </div>
+
+            <div class="section">
+                <div id="moodPairings"></div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

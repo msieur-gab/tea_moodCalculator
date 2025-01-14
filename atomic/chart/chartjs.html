@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tea Mood Analysis</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
+    <style>
+        :root {
+            --jade-green-bg: rgba(144, 238, 144, 0.1);
+            --jade-green-light: rgba(0, 168, 107, 0.3);
+            --jade-green-dark: rgba(0, 100, 0, 0.8);
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin: 20px auto;
+        }
+
+        .tea-selector {
+            text-align: center;
+            margin: 20px;
+        }
+
+        select {
+            padding: 8px 16px;
+            font-size: 16px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+
+        #description-container {
+            margin: 20px auto;
+            padding: 15px;
+            background-color: #f8f8f8;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            text-align: center;
+            min-height: 50px;
+        }
+
+        .tea-info {
+            margin: 20px auto;
+            padding: 15px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .tea-info h3 {
+            margin: 0 0 10px 0;
+            color: var(--jade-green-dark);
+        }
+
+        .tea-info p {
+            margin: 5px 0;
+        }
+
+        .composite-mood {
+            font-weight: bold;
+            color: var(--jade-green-dark);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="tea-selector">
+            <select id="teaSelect"></select>
+        </div>
+        <div class="chart-container">
+            <canvas id="moodRadar"></canvas>
+        </div>
+        <div id="description-container">
+            Click on any point to see detailed descriptions.
+        </div>
+        <div class="tea-info" id="teaInfo"></div>
+    </div>
+
+    <script type="module">
+        import { teaDatabase } from '../database.js';
+        import { createGranularMoodProfile } from '../atomicMooder.js';
+        import { atomicMoods } from '../moodParameters.js';
+
+        // Fixed order of moods
+        const moodOrder = [
+            'energizing', 'invigorating', 'focusing', 'uplifting',
+            'refreshing', 'harmonizing', 'calming', 'serene',
+            'contemplative', 'meditative', 'grounding', 'warming',
+            'cozy', 'nourishing'
+        ];
+
+        let moodChart = null;
+        let currentTeaProfile = null;
+
+        function getMoodData(tea) {
+            const profile = createGranularMoodProfile(tea);
+            currentTeaProfile = profile;
+            return profile;
+        }
+
+        function updateTeaInfo(tea, profile) {
+            const teaInfo = document.getElementById('teaInfo');
+            teaInfo.innerHTML = `
+                <h3>${tea.name}</h3>
+                ${tea.originalName ? `<p>Original Name: ${tea.originalName}</p>` : ''}
+                <p>Type: ${tea.type}</p>
+                <p>Origin: ${tea.origin}</p>
+                <p class="composite-mood">
+                    Composite Mood: ${profile.compositeMood.name}<br>
+                    ${profile.compositeMood.description}
+                </p>
+                <p>Primary: ${profile.components.primary.mood} (${profile.components.primary.influence})</p>
+                <p>Secondary: ${profile.components.secondary.mood} (${profile.components.secondary.influence})</p>
+            `;
+        }
+
+        function updateChart(tea) {
+            const profile = getMoodData(tea);
+            const moodScores = moodOrder.map(mood => profile.allScores[mood] || 0);
+
+            const data = {
+                labels: moodOrder,
+                datasets: [{
+                    label: `${tea.name} Mood Profile`,
+                    data: moodScores,
+                    fill: true,
+                    backgroundColor: 'rgba(0, 168, 107, 0.2)',
+                    borderColor: 'rgba(0, 168, 107, 0.8)',
+                    pointBackgroundColor: 'rgba(0, 168, 107, 1)',
+                    pointBorderColor: '#fff',
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: 'rgba(0, 168, 107, 1)',
+                    pointRadius: 4,
+                    pointHoverRadius: 6
+                }]
+            };
+
+            if (!moodChart) {
+                const ctx = document.getElementById('moodRadar').getContext('2d');
+                moodChart = new Chart(ctx, {
+                    type: 'radar',
+                    data: data,
+                    options: {
+                        scales: {
+                            r: {
+                                min: 0,
+                                max: 10,
+                                beginAtZero: true,
+                                grid: {
+                                    color: 'rgba(0, 168, 107, 0.1)'
+                                },
+                                angleLines: {
+                                    color: 'rgba(0, 168, 107, 0.1)'
+                                },
+                                pointLabels: {
+                                    font: {
+                                        size: 12
+                                    }
+                                }
+                            }
+                        },
+                        animations: {
+                            tension: {
+                                duration: 750,
+                                easing: 'cubic-bezier(0.4, 0, 0.2, 1)',
+                                from: 0.4,
+                                to: 0.35
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: (context) => {
+                                        const mood = context.label;
+                                        const score = context.raw.toFixed(1);
+                                        let description = '';
+
+                                        if (profile.components.primary.mood === mood) {
+                                            description = profile.components.primary.description;
+                                        } else if (profile.components.secondary.mood === mood) {
+                                            description = profile.components.secondary.description;
+                                        } else {
+                                            description = atomicMoods[mood]?.description || '';
+                                        }
+
+                                        return `${mood}: ${score}/10\n${description}`;
+                                    }
+                                }
+                            }
+                        },
+                        elements: {
+                            line: {
+                                tension: 0.35
+                            }
+                        }
+                    }
+                });
+            } else {
+                moodChart.data = data;
+                moodChart.update('active');
+            }
+
+            updateTeaInfo(tea, profile);
+        }
+
+        // Initialize and set up event listeners
+        document.addEventListener('DOMContentLoaded', () => {
+            // Populate tea selector
+            const select = document.getElementById('teaSelect');
+            teaDatabase.forEach(tea => {
+                const option = document.createElement('option');
+                option.value = tea.name;
+                option.textContent = tea.originalName ? 
+                    `${tea.name} (${tea.originalName})` : 
+                    tea.name;
+                select.appendChild(option);
+            });
+
+            // Initialize with first tea
+            updateChart(teaDatabase[0]);
+
+            // Set up event listeners
+            select.addEventListener('change', (e) => {
+                const selectedTea = teaDatabase.find(tea => tea.name === e.target.value);
+                updateChart(selectedTea);
+            });
+
+            window.addEventListener('resize', () => {
+                if (moodChart) {
+                    moodChart.resize();
+                }
+            });
+        });
+    </script>
+</body>
+</html>

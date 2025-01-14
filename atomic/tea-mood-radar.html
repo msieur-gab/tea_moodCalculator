@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced Tea Mood Radar Chart</title>
+    <style>
+        :root {
+            --jade-green-bg: rgba(144, 238, 144, 0.1);
+            --jade-green-light: rgba(0, 168, 107, 0.3);
+            --jade-green-dark: rgba(0, 100, 0, 0.8);
+            --radar-background-color: rgba(144, 238, 144, 0.2);
+            --radar-fill-color: rgba(0, 168, 107, 0.2);
+            --radar-stroke-color: rgba(0, 168, 107, 0.8);
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .chart-container {
+            width: 600px;
+            height: 600px;
+            margin: 20px auto;
+            position: relative;
+        }
+
+        .tea-selector {
+            text-align: center;
+            margin: 20px;
+        }
+
+        select {
+            padding: 8px 16px;
+            font-size: 16px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+
+        #description-container {
+            margin: 20px auto;
+            padding: 15px;
+            background-color: #f8f8f8;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            text-align: center;
+            min-height: 50px;
+        }
+
+        #radar-chart {
+            width: 100%;
+            height: 100%;
+        }
+
+        .shape-path {
+            transition: d 0.75s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .data-point {
+            transition: cx 0.75s cubic-bezier(0.4, 0, 0.2, 1),
+                        cy 0.75s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="tea-selector">
+            <select id="teaSelect">
+                <option value="gyokuro">Gyokuro</option>
+                <option value="darjeeling">Darjeeling First Flush</option>
+                <option value="puerh">Aged Pu-erh</option>
+            </select>
+        </div>
+        <div class="chart-container">
+            <svg id="radar-chart" viewBox="0 0 600 600"></svg>
+        </div>
+        <div id="description-container">
+            Click on any point to see detailed descriptions.
+        </div>
+    </div>
+
+    <script>
+        const moodOrder = [
+            'energizing', 'invigorating', 'focusing', 'uplifting',
+            'refreshing', 'harmonizing', 'calming', 'serene',
+            'contemplative', 'meditative', 'grounding', 'warming',
+            'cozy', 'nourishing'
+        ];
+
+        const teaMoodData = {
+            gyokuro: {
+                energizing: { score: 4, description: "Gentle lift in energy" },
+                invigorating: { score: 5, description: "Subtle invigoration" },
+                focusing: { score: 8, description: "Enhanced mental clarity and concentration" },
+                uplifting: { score: 5, description: "Gentle mood elevation" },
+                refreshing: { score: 6, description: "Clean and bright sensation" },
+                harmonizing: { score: 7, description: "Balanced energy and mood" },
+                calming: { score: 9, description: "Deep sense of tranquility and peace" },
+                serene: { score: 7, description: "Peaceful state of mind" },
+                contemplative: { score: 7, description: "Promotes thoughtful reflection" },
+                meditative: { score: 7, description: "Supports mindful awareness" },
+                grounding: { score: 6, description: "Centered and stable feeling" },
+                warming: { score: 5, description: "Gentle warming sensation" },
+                cozy: { score: 5, description: "Comfortable feeling" },
+                nourishing: { score: 8, description: "Rich in nutrients and feeling of wellbeing" }
+            },
+            darjeeling: {
+                energizing: { score: 8, description: "Vibrant and uplifting energy" },
+                invigorating: { score: 7, description: "Fresh and awakening sensation" },
+                focusing: { score: 6, description: "Clear mental state" },
+                uplifting: { score: 8, description: "Elevated mood and spirit" },
+                refreshing: { score: 7, description: "Bright and clean feeling" },
+                harmonizing: { score: 5, description: "Balanced energy flow" },
+                calming: { score: 4, description: "Light calming effect" },
+                serene: { score: 4, description: "Subtle peace" },
+                contemplative: { score: 5, description: "Gentle reflection" },
+                meditative: { score: 4, description: "Light meditative quality" },
+                grounding: { score: 4, description: "Light earthing quality" },
+                warming: { score: 3, description: "Mild warming sensation" },
+                cozy: { score: 3, description: "Subtle comfort" },
+                nourishing: { score: 5, description: "Moderate nourishing quality" }
+            },
+            puerh: {
+                energizing: { score: 4, description: "Stable energy" },
+                invigorating: { score: 5, description: "Gentle invigoration" },
+                focusing: { score: 6, description: "Steady concentration" },
+                uplifting: { score: 5, description: "Subtle uplift" },
+                refreshing: { score: 4, description: "Mild refreshment" },
+                harmonizing: { score: 7, description: "Well-balanced energy" },
+                calming: { score: 5, description: "Gentle relaxation" },
+                serene: { score: 5, description: "Peaceful presence" },
+                contemplative: { score: 8, description: "Deep introspective quality" },
+                meditative: { score: 8, description: "Profound mindful state" },
+                grounding: { score: 9, description: "Deep earthing and stabilizing" },
+                warming: { score: 6, description: "Comforting warmth" },
+                cozy: { score: 7, description: "Comfortable and settling" },
+                nourishing: { score: 6, description: "Nurturing sensation" }
+            }
+        };
+
+        let currentShape = null;
+        let currentPoints = [];
+
+        function displayDescription(mood, teaType) {
+            const description = teaMoodData[teaType][mood].description;
+            document.getElementById('description-container').textContent = `${mood}: ${description}`;
+        }
+
+        function calculatePoints(teaType, radius, centerX, centerY) {
+            const angleStep = (Math.PI * 2) / moodOrder.length;
+            return moodOrder.map((mood, i) => {
+                const angle = i * angleStep - Math.PI / 2;
+                const score = teaMoodData[teaType][mood].score;
+                const distance = (score / 10) * radius;
+                return {
+                    x: centerX + distance * Math.cos(angle),
+                    y: centerY + distance * Math.sin(angle),
+                    mood
+                };
+            });
+        }
+
+        function createSmoothPath(points) {
+            let path = `M ${points[0].x} ${points[0].y}`;
+            for (let i = 0; i < points.length; i++) {
+                const p1 = points[i];
+                const p2 = points[(i + 1) % points.length];
+                const p3 = points[(i + 2) % points.length];
+
+                const cp1x = p2.x + (p1.x - p3.x) * 0.2;
+                const cp1y = p2.y + (p1.y - p3.y) * 0.2;
+
+                path += ` S ${cp1x} ${cp1y}, ${p2.x} ${p2.y}`;
+            }
+            path += ' Z';
+            return path;
+        }
+
+        function initializeChart(teaType) {
+            const svg = document.getElementById('radar-chart');
+            svg.innerHTML = ''; // Clear existing content
+            
+            const width = 600;
+            const height = 600;
+            const centerX = width / 2;
+            const centerY = height / 2;
+            const radius = Math.min(width, height) / 2 - 80;
+
+            // Create background circles
+            for (let i = 1; i <= 10; i++) {
+                const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                circle.setAttribute('cx', centerX);
+                circle.setAttribute('cy', centerY);
+                circle.setAttribute('r', radius * (i / 10));
+                circle.setAttribute('fill', 'var(--jade-green-bg)');
+                circle.setAttribute('stroke', 'var(--radar-background-color)');
+                svg.appendChild(circle);
+            }
+
+            // Create axes and labels
+            const angleStep = (Math.PI * 2) / moodOrder.length;
+            moodOrder.forEach((mood, i) => {
+                const angle = i * angleStep - Math.PI / 2;
+                const x2 = centerX + radius * Math.cos(angle);
+                const y2 = centerY + radius * Math.sin(angle);
+                
+                // Axis line
+                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line.setAttribute('x1', centerX);
+                line.setAttribute('y1', centerY);
+                line.setAttribute('x2', x2);
+                line.setAttribute('y2', y2);
+                line.setAttribute('stroke', 'var(--jade-green-light)');
+                svg.appendChild(line);
+
+                // Label
+                const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                const labelRadius = radius + 30;
+                const labelX = centerX + labelRadius * Math.cos(angle);
+                const labelY = centerY + labelRadius * Math.sin(angle);
+                
+                text.setAttribute('x', labelX);
+                text.setAttribute('y', labelY);
+                text.setAttribute('fill', 'var(--jade-green-dark)');
+                text.setAttribute('font-size', '12px');
+                text.setAttribute('text-anchor', 'middle');
+                text.setAttribute('dominant-baseline', 'middle');
+                text.textContent = mood;
+                
+                let rotation = (angle * 180 / Math.PI) + 90;
+                if (rotation > 90 && rotation < 270) {
+                    rotation += 180;
+                }
+                text.setAttribute('transform', `rotate(${rotation},${labelX},${labelY})`);
+                
+                svg.appendChild(text);
+            });
+
+            // Create initial shape
+            const points = calculatePoints(teaType, radius, centerX, centerY);
+            currentShape = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            currentShape.setAttribute('class', 'shape-path');
+            currentShape.setAttribute('fill', 'var(--radar-fill-color)');
+            currentShape.setAttribute('stroke', 'var(--radar-stroke-color)');
+            currentShape.setAttribute('stroke-width', '2');
+            currentShape.setAttribute('d', createSmoothPath(points));
+            svg.appendChild(currentShape);
+
+            // Create data points
+            currentPoints = points.map(point => {
+                const dataPoint = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                dataPoint.setAttribute('class', 'data-point');
+                dataPoint.setAttribute('cx', point.x);
+                dataPoint.setAttribute('cy', point.y);
+                dataPoint.setAttribute('r', '6');
+                dataPoint.setAttribute('fill', 'var(--radar-stroke-color)');
+                dataPoint.setAttribute('cursor', 'pointer');
+                
+                dataPoint.addEventListener('click', () => {
+                    displayDescription(point.mood, teaType);
+                });
+
+                dataPoint.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    displayDescription(point.mood, teaType);
+                });
+
+                svg.appendChild(dataPoint);
+                return dataPoint;
+            });
+        }
+
+        function updateChart(teaType, animate = true) {
+            const width = 600;
+            const height = 600;
+            const centerX = width / 2;
+            const centerY = height / 2;
+            const radius = Math.min(width, height) / 2 - 80;
+
+            const newPoints = calculatePoints(teaType, radius, centerX, centerY);
+            const newPath = createSmoothPath(newPoints);
+
+            if (!animate) {
+                currentShape.style.transition = 'none';
+                currentPoints.forEach(point => point.style.transition = 'none');
+            }
+
+            currentShape.setAttribute('d', newPath);
+            newPoints.forEach((point, i) => {
+                currentPoints[i].setAttribute('cx', point.x);
+                currentPoints[i].setAttribute('cy', point.y);
+            });
+
+            if (!animate) {
+                // Force reflow
+                currentShape.offsetHeight;
+                currentPoints.forEach(point => point.offsetHeight);
+                // Restore transitions
+                currentShape.style.transition = '';
+                currentPoints.forEach(point => point.style.transition = '');
+            }
+        }
+
+        // Initialize and set up event listeners
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeChart('gyokuro');
+
+            document.getElementById('teaSelect').addEventListener('change', (e) => {
+                updateChart(e.target.value, true);
+            });
+
+            window.addEventListener('resize', () => {
+                initializeChart(document.getElementById('teaSelect').value);
+            });
+        });
+    </script>
+</body>
+</html>

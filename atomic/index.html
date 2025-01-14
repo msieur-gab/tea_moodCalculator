@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Granular Tea Mood Analysis</title>
+    <style>
+        :root {
+            --primary-color: #4a5568;
+            --secondary-color: #718096;
+            --accent-color: #48bb78;
+            --bg-color: #f7fafc;
+            --card-bg: #ffffff;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            line-height: 1.5;
+            margin: 0;
+            padding: 2rem;
+            background-color: var(--bg-color);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .section {
+            background: var(--card-bg);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        select, button {
+            padding: 0.5rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            background: white;
+            width: 100%;
+        }
+
+        button {
+            background: var(--accent-color);
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+      
+.mood-bar {
+    background: #e2e8f0;
+    height: 12px;
+    border-radius: 6px;
+    overflow: hidden;
+    margin: 8px 0;
+}
+
+.mood-fill {
+    height: 100%;
+    transition: width 0.3s ease;
+}
+
+/* Add classes for each mood gradient */
+.mood-fill-energizing {
+    background: linear-gradient(90deg, #FF9966, #FF5E62);
+}
+
+.mood-fill-invigorating {
+    background: linear-gradient(90deg, #FFE259, #FFA751);
+}
+
+.mood-fill-calming {
+    background: linear-gradient(90deg, #4CA1AF, #2C3E50);
+}
+
+.mood-fill-serene {
+    background: linear-gradient(90deg, #89f7fe, #66a6ff);
+}
+
+.mood-fill-focusing {
+    background: linear-gradient(90deg, #72AFD3, #37ECBA);
+}
+
+.mood-fill-contemplative {
+    background: linear-gradient(90deg, #614385, #516395);
+}
+
+.mood-fill-cozy {
+    background: linear-gradient(90deg, #F6D365, #FDA085);
+}
+
+.mood-fill-warming {
+    background: linear-gradient(90deg, #FF512F, #DD2476);
+}
+
+.mood-fill-grounding {
+    background: linear-gradient(90deg, #636363, #a2ab58);
+}
+
+.mood-fill-meditative {
+    background: linear-gradient(90deg, #5B247A, #1BCEDF);
+}
+
+.mood-fill-harmonizing {
+    background: linear-gradient(90deg, #7F7FD5, #91EAE4);
+}
+
+.mood-fill-nourishing {
+    background: linear-gradient(90deg, #48c6ef, #6f86d6);
+}
+
+.mood-fill-uplifting {
+    background: linear-gradient(90deg, #fad0c4, #ffd1ff);
+}
+
+.mood-fill-refreshing {
+    background: linear-gradient(90deg, #96fbc4, #f9f586);
+}
+
+/* For composite moods */
+.mood-fill-composite {
+    background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+}
+
+/* Add mood cards styling */
+.mood-card {
+    /* border-left: 4px solid var(--mood-color-start, #e2e8f0); */
+    transition: border-color 0.3s ease;
+}
+
+        .atomic-moods {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .tea-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .tag {
+            background: #e2e8f0;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+        }
+
+        .characteristics {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: #f8fafc;
+            border-radius: 6px;
+        }
+
+        h1, h2, h3, h4 {
+            color: var(--primary-color);
+            margin-top: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Granular Tea Mood Analysis</h1>
+        
+        <div class="section controls">
+            <div>
+                <label for="teaSelect">Select Tea:</label>
+                <select id="teaSelect"></select>
+            </div>
+            <div>
+                <label for="typeFilter">Filter by Type:</label>
+                <select id="typeFilter">
+                    <option value="all">All Types</option>
+                    <option value="green">Green</option>
+                    <option value="black">Black</option>
+                    <option value="oolong">Oolong</option>
+                    <option value="white">White</option>
+                    <option value="puerh">Pu-erh</option>
+                    <option value="yellow">Yellow</option>
+                    <option value="herbal">Herbal</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="tea-info" id="teaInfo"></div>
+        </div>
+
+        <div class="section">
+            <h2>Granular Mood Analysis</h2>
+            <div id="granularMood"></div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { teaDatabase } from './database.js';
+        import { 
+            createGranularMoodProfile 
+        } from './atomicMooder.js';
+        import { 
+            atomicMoods 
+        } from './moodParameters.js';
+
+        function populateTeaSelect() {
+            const select = document.getElementById('teaSelect');
+            const typeFilter = document.getElementById('typeFilter').value;
+            
+            let filteredTeas = teaDatabase;
+            if (typeFilter !== 'all') {
+                filteredTeas = teaDatabase.filter(tea => tea.type.toLowerCase() === typeFilter.toLowerCase());
+            }
+
+            select.innerHTML = filteredTeas.map(tea => `
+                <option value="${tea.name}">${tea.name} ${tea.originalName ? `(${tea.originalName})` : ''}</option>
+            `).join('');
+
+            updateDisplay();
+        }
+
+        function updateDisplay() {
+            const selectedTea = teaDatabase.find(tea => 
+                tea.name === document.getElementById('teaSelect').value
+            );
+
+            if (!selectedTea) return;
+
+            // Update Tea Info
+            document.getElementById('teaInfo').innerHTML = `
+                <div>
+                    <h3>Basic Information</h3>
+                    <p><strong>Name:</strong> ${selectedTea.name}</p>
+                    <p><strong>Original Name:</strong> ${selectedTea.originalName || 'N/A'}</p>
+                    <p><strong>Type:</strong> ${selectedTea.type}</p>
+                    <p><strong>Origin:</strong> ${selectedTea.origin}</p>
+                </div>
+                <div>
+                    <h3>Levels</h3>
+                    <p><strong>Caffeine Level:</strong> ${selectedTea.caffeineLevel}/10</p>
+                    <p><strong>L-Theanine Level:</strong> ${selectedTea.lTheanineLevel}/10</p>
+                </div>
+                <div>
+                    <h3>Flavor Profile</h3>
+                    <div class="tags">
+                        ${selectedTea.flavorProfile.map(flavor => 
+                            `<span class="tag">${flavor}</span>`
+                        ).join('')}
+                    </div>
+                </div>
+                <div>
+                    <h3>Processing Methods</h3>
+                    <div class="tags">
+                        ${selectedTea.processingMethods.map(method => 
+                            `<span class="tag">${method}</span>`
+                        ).join('')}
+                    </div>
+                </div>
+            `;
+
+            // Granular Mood Analysis
+            const granularMood = createGranularMoodProfile(selectedTea);
+const primaryColor = atomicMoods[granularMood.components.primary.mood].color;
+const secondaryColor = atomicMoods[granularMood.components.secondary.mood].color;
+
+document.getElementById('granularMood').innerHTML = `
+    <div class="mood-card">
+        <h3>${granularMood.compositeMood.name}</h3>
+        <p>${granularMood.compositeMood.description}</p>
+        <div class="mood-bar">
+            <div class="mood-fill" style="width: ${granularMood.compositeMood.score * 10}%; 
+                                       background: linear-gradient(90deg, 
+                                            ${primaryColor.start}, 
+                                            ${secondaryColor.end})">
+            </div>
+        </div>
+        <p>Score: ${granularMood.compositeMood.score.toFixed(1)}/10</p>
+    </div>
+
+    <div class="mood-card" style="--mood-color-start: ${primaryColor.start}">
+        <h4>Primary Component: ${granularMood.components.primary.mood}</h4>
+        <p>${granularMood.components.primary.description}</p>
+        <p>Influence: ${granularMood.components.primary.influence}</p>
+        <div class="mood-bar">
+            <div class="mood-fill" style="width: ${granularMood.components.primary.score * 10}%;
+                                        background: linear-gradient(90deg, 
+                                            ${primaryColor.start}, 
+                                            ${primaryColor.end})">
+            </div>
+        </div>
+    </div>
+
+    <div class="mood-card" style="--mood-color-start: ${secondaryColor.start}">
+        <h4>Secondary Component: ${granularMood.components.secondary.mood}</h4>
+        <p>${granularMood.components.secondary.description}</p>
+        <p>Influence: ${granularMood.components.secondary.influence}</p>
+        <div class="mood-bar">
+            <div class="mood-fill" style="width: ${granularMood.components.secondary.score * 10}%;
+                                        background: linear-gradient(90deg, 
+                                            ${secondaryColor.start}, 
+                                            ${secondaryColor.end})">
+            </div>
+        </div>
+    </div>
+
+    <div class="characteristics">
+        <h4>Dominant Characteristics</h4>
+        <p><strong>Compound Ratio:</strong> L-Theanine/Caffeine = ${granularMood.dominantCharacteristics.compounds.ratio}</p>
+        <h5>Strongest Flavors:</h5>
+        <div class="tags">
+            ${granularMood.dominantCharacteristics.strongestFlavors.map(f => 
+                `<span class="tag">${f.flavor} (${f.impact.toFixed(1)})</span>`
+            ).join('')}
+        </div>
+        <h5>Key Processing Methods:</h5>
+        <div class="tags">
+            ${granularMood.dominantCharacteristics.keyProcessingMethods.map(p => 
+                `<span class="tag">${p.method} (${p.impact.toFixed(1)})</span>`
+            ).join('')}
+        </div>
+    </div>
+
+    <div class="atomic-moods">
+        ${Object.entries(granularMood.allScores)
+            .sort(([, a], [, b]) => b - a)
+            .map(([mood, score]) => `
+                <div class="mood-card" style="--mood-color-start: ${atomicMoods[mood].color.start}">
+                    <h4>${mood}</h4>
+                    <div class="mood-bar">
+                        <div class="mood-fill" style="width: ${score * 10}%;
+                                                    background: linear-gradient(90deg, 
+                                                        ${atomicMoods[mood].color.start}, 
+                                                        ${atomicMoods[mood].color.end})">
+                        </div>
+                    </div>
+                    <p>${score.toFixed(1)}/10</p>
+                </div>
+            `).join('')}
+    </div>
+            `;
+        }
+
+        // Event Listeners
+        document.getElementById('teaSelect').addEventListener('change', updateDisplay);
+        document.getElementById('typeFilter').addEventListener('change', populateTeaSelect);
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', populateTeaSelect);
+    </script>
+</body>
+</html>

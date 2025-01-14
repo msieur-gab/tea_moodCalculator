@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tea Mood Analysis</title>
+    <style>
+        :root {
+            --jade-green-bg: rgba(144, 238, 144, 0.1);
+            --jade-green-light: rgba(0, 168, 107, 0.3);
+            --jade-green-dark: rgba(0, 100, 0, 0.8);
+            --radar-background-color: rgba(144, 238, 144, 0.2);
+            --radar-fill-color: rgba(0, 168, 107, 0.2);
+            --radar-stroke-color: rgba(0, 168, 107, 0.8);
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .chart-container {
+            width: 600px;
+            height: 600px;
+            margin: 20px auto;
+            position: relative;
+        }
+
+        .tea-selector {
+            text-align: center;
+            margin: 20px;
+        }
+
+        select {
+            padding: 8px 16px;
+            font-size: 16px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+
+        #description-container {
+            margin: 20px auto;
+            padding: 15px;
+            background-color: #f8f8f8;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            text-align: center;
+            min-height: 50px;
+        }
+
+        #radar-chart {
+            width: 100%;
+            height: 100%;
+        }
+
+        .shape-path {
+            transition: d 0.75s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .data-point {
+            transition: cx 0.75s cubic-bezier(0.4, 0, 0.2, 1),
+                        cy 0.75s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="tea-selector">
+            <select id="teaSelect"></select>
+        </div>
+        <div class="chart-container">
+            <svg id="radar-chart" viewBox="0 0 600 600"></svg>
+        </div>
+        <div id="description-container">
+            Click on any point to see detailed descriptions.
+        </div>
+    </div>
+
+    <script type="module" src="./chart.js"></script>
+</body>
+</html>

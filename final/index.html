@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tea Experience Visualizer</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Tea Experience Visualizer</h1>
+        
+        <div class="controls">
+            <select id="typeFilter">
+                <option value="all">All Types</option>
+                <option value="green">Green</option>
+                <option value="black">Black</option>
+                <option value="oolong">Oolong</option>
+                <option value="white">White</option>
+                <option value="puerh">Pu-erh</option>
+                <option value="herbal">Herbal</option>
+            </select>
+            <select id="sortBy">
+                <option value="relaxation">Sort by Relaxation</option>
+                <option value="name">Sort by Name</option>
+                <option value="energy">Sort by Energy</option>
+                <option value="serenity">Sort by Serenity</option>
+            </select>
+            <button id="toggleDetails">Show/Hide Details</button>
+            <button id="toggleCustomTea">Add Custom Tea</button>
+        </div>
+
+        <div id="customTeaForm">
+            <h2>Add Custom Tea</h2>
+            <div class="form-group">
+                <label for="teaName">Tea Name:</label>
+                <input type="text" id="teaName" required>
+            </div>
+            <div class="form-group">
+                <label for="teaType">Type:</label>
+                <select id="teaType">
+                    <option value="green">Green</option>
+                    <option value="black">Black</option>
+                    <option value="oolong">Oolong</option>
+                    <option value="white">White</option>
+                    <option value="puerh">Pu-erh</option>
+                    <option value="herbal">Herbal</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="teaOrigin">Origin:</label>
+                <input type="text" id="teaOrigin">
+            </div>
+            <div class="form-group">
+                <label for="teaCaffeine">Caffeine Level (1-10):</label>
+                <input type="number" id="teaCaffeine" min="0" max="10" required>
+            </div>
+            <div class="form-group">
+                <label for="teaTheanine">L-Theanine Level (1-10):</label>
+                <input type="number" id="teaTheanine" min="0" max="10" required>
+            </div>
+            <div class="form-group">
+                <label for="teaFlavors">Flavor Profiles (comma-separated):</label>
+                <input type="text" id="teaFlavors" placeholder="e.g., honey, jasmine, peach">
+            </div>
+            <div class="form-group">
+                <label>Processing Methods:</label>
+                <div id="processingMethods" class="processing-selector"></div>
+            </div>
+            <button onclick="addCustomTea()">Add Tea</button>
+        </div>
+
+        <div id="teaGrid" class="tea-grid"></div>
+    </div>
+
+    <script type="module">
+        import { teaDatabase } from './database.js';
+        import { calculateTeaMood } from './mooder.js';
+
+        let workingTeaDatabase = teaDatabase.map(tea => ({
+            ...tea,
+            // Use primary mood's score as the relaxation score
+            relaxationScore: calculateTeaMood(tea).primary.score
+        }));
+
+        function createTeaCard(tea) {
+    const cardDiv = document.createElement('div');
+    cardDiv.className = 'tea-card';
+    
+    // Calculate mood with error handling
+    let moodResult;
+    try {
+        moodResult = calculateTeaMood(tea);
+    } catch (error) {
+        console.error(`Error calculating mood for tea ${tea.name}:`, error);
+        moodResult = {
+            primary: {
+                type: 'default',
+                title: 'Mood Unavailable',
+                description: 'Unable to calculate mood profile',
+                score: 0
+            },
+            secondary: null,
+            allScores: {}
+        };
+    }
+
+    const relaxationScore = moodResult.primary.score;
+    const primaryMood = moodResult?.primary || {
+        type: 'default',
+        title: 'Mood Unavailable',
+        description: 'Unable to calculate mood profile',
+        score: 0
+    };
+
+    cardDiv.innerHTML = `
+        <div class="tea-name">
+            <div class="original-name">${tea.originalName || tea.name}</div>
+            ${tea.originalName ? `<div class="english-name">${tea.name}</div>` : ''}
+        </div>
+        
+        <div class="score-section">
+            <div class="mood-header">Relaxation Score</div>
+            <div class="score-bar">
+                <div class="score-fill" style="width: ${relaxationScore * 10}%"></div>
+            </div>
+            <div class="mood-score">${relaxationScore}/10</div>
+        </div>
+
+        <div class="mood-section">
+            <div class="mood-header">Mood Profile</div>
+            <div class="mood-primary mood-${primaryMood.type}">
+                <div class="mood-title">${primaryMood.title}</div>
+                <div class="mood-description">${primaryMood.description}</div>
+                <div class="mood-bar">
+                    <div class="mood-fill" style="width: ${primaryMood.score * 10}%"></div>
+                </div>
+                <div class="mood-score">${primaryMood.score}/10</div>
+            </div>
+            ${moodResult?.secondary ? `
+                <div class="mood-secondary mood-${moodResult.secondary.type}">
+                    <div class="mood-title">${moodResult.secondary.title}</div>
+                    <div class="mood-description">${moodResult.secondary.description}</div>
+                    <div class="mood-bar">
+                        <div class="mood-fill" style="width: ${moodResult.secondary.score * 10}%"></div>
+                    </div>
+                    <div class="mood-score">${moodResult.secondary.score}/10</div>
+                </div>
+            ` : ''}
+        </div>
+
+        <div class="tea-details" style="display: none;">
+            <div class="detail-row">
+                <span>Type:</span>
+                <span>${tea.type || 'Unknown'}</span>
+            </div>
+            <div class="detail-row">
+                <span>Origin:</span>
+                <span>${tea.origin || 'Not specified'}</span>
+            </div>
+            <div class="detail-row">
+                <span>Caffeine Level:</span>
+                <span>${tea.caffeineLevel || 0}/10</span>
+            </div>
+            <div class="detail-row">
+                <span>L-Theanine Level:</span>
+                <span>${tea.lTheanineLevel || 0}/10</span>
+            </div>
+            <div class="detail-row">
+                <span>Flavor Profile:</span>
+                <div class="tags-container">
+                    ${Array.isArray(tea.flavorProfile) 
+                        ? tea.flavorProfile.map(f => `<span class="tag">${f || 'Unknown'}</span>`).join('')
+                        : tea.flavorProfile 
+                            ? `<span class="tag">${tea.flavorProfile}</span>`
+                            : '<span class="tag">No flavors specified</span>'}
+                </div>
+            </div>
+            <div class="detail-row">
+                <span>Processing:</span>
+                <div class="tags-container">
+                    ${Array.isArray(tea.processingMethods)
+                        ? tea.processingMethods.map(m => `<span class="tag">${m}</span>`).join('')
+                        : '<span class="tag">No processing methods specified</span>'}
+                </div>
+            </div>
+        </div>
+    `;
+    
+    return cardDiv;
+}     function updateDisplay() {
+            const typeFilter = document.getElementById('typeFilter').value;
+            const sortBy = document.getElementById('sortBy').value;
+            const grid = document.getElementById('teaGrid');
+            
+            let filteredTeas = workingTeaDatabase;
+            if (typeFilter !== 'all') {
+                filteredTeas = filteredTeas.filter(tea => 
+                    tea.type && tea.type.toLowerCase() === typeFilter.toLowerCase()
+                );
+            }
+            
+            filteredTeas = [...filteredTeas].sort((a, b) => {
+                try {
+                    const aMood = calculateTeaMood(a);
+                    const bMood = calculateTeaMood(b);
+                    
+                    switch (sortBy) {
+                        case 'relaxation':
+                            return bMood.primary.score - aMood.primary.score;
+                        case 'name':
+                            return (a.name || '').localeCompare(b.name || '');
+                        case 'energy':
+                            return (bMood.allScores?.energizing || 0) - (aMood.allScores?.energizing || 0);
+                        case 'serenity':
+                            return (bMood.allScores?.serene || 0) - (aMood.allScores?.serene || 0);
+                        default:
+                            return 0;
+                    }
+                } catch (error) {
+                    console.error('Error during sorting:', error);
+                    return 0;
+                }
+            });
+            
+            grid.innerHTML = '';
+            filteredTeas.forEach(tea => {
+                grid.appendChild(createTeaCard(tea));
+            });
+        }
+
+        function populateProcessingMethods() {
+            const container = document.getElementById('processingMethods');
+            const processingCategories = {
+                heat: ['steamed', 'pan-fired', 'light-roast', 'medium-roast', 'heavy-roast', 'baked', 'charcoal-roasted'],
+                oxidation: ['withered', 'oxidised', 'partial-oxidation', 'full-oxidation', 'kill-green'],
+                drying: ['sun-dried', 'cryodesiccated'],
+                shaping: ['rolled', 'twisted', 'ball-rolled', 'strip-style', 'compressed'],
+                fermentation: ['fermented', 'wet-piled', 'pile-fermented'],
+                scenting: ['scented', 'jasmine-scented', 'osmanthus-scented', 'rose-scented'],
+                special: ['gaba-processed', 'bug-bitten', 'frost-withered', 'yellow-processing'],
+                growing: ['shade-grown', 'minimal-processing']
+            };
+
+            container.innerHTML = Object.entries(processingCategories)
+                .map(([category, methods]) => `
+                    <div class="method-category">
+                        <div class="method-category-title">${category.charAt(0).toUpperCase() + category.slice(1)}</div>
+                        <div class="method-options">
+                            ${methods.map(method => `
+                                <label class="method-checkbox">
+                                    <input type="checkbox" name="processing" value="${method}">
+                                    ${method}
+                                </label>
+                            `).join('')}
+                        </div>
+                    </div>
+                `).join('');
+        }
+
+        function addCustomTea() {
+            const selectedMethods = Array.from(document.querySelectorAll('input[name="processing"]:checked'))
+                .map(input => input.value);
+
+            const newTea = {
+                name: document.getElementById('teaName').value,
+                type: document.getElementById('teaType').value,
+                origin: document.getElementById('teaOrigin').value,
+                caffeineLevel: Number(document.getElementById('teaCaffeine').value),
+                lTheanineLevel: Number(document.getElementById('teaTheanine').value),
+                flavorProfile: document.getElementById('teaFlavors').value
+                    .split(',')
+                    .map(flavor => flavor.trim())
+                    .filter(flavor => flavor),
+                processingMethods: selectedMethods
+            };
+
+            // Calculate relaxation score based on mood
+            const moodResult = calculateTeaMood(newTea);
+            newTea.relaxationScore = moodResult.primary.score;
+            
+            workingTeaDatabase.push(newTea);
+            updateDisplay();
+            
+            // Reset form
+            document.getElementById('customTeaForm').style.display = 'none';
+            document.getElementById('teaName').value = '';
+            document.getElementById('teaOrigin').value = '';
+            document.getElementById('teaCaffeine').value = '';
+            document.getElementById('teaTheanine').value = '';
+            document.getElementById('teaFlavors').value = '';
+            document.querySelectorAll('input[name="processing"]:checked')
+                .forEach(input => input.checked = false);
+        }
+
+        // Event Listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            populateProcessingMethods();
+            
+            document.getElementById('typeFilter').addEventListener('change', updateDisplay);
+            document.getElementById('sortBy').addEventListener('change', updateDisplay);
+            
+            document.getElementById('toggleDetails').addEventListener('click', () => {
+                const details = document.querySelectorAll('.tea-details');
+                const isHidden = details[0]?.style.display === 'none';
+                details.forEach(detail => {
+                    detail.style.display = isHidden ? 'block' : 'none';
+                });
+            });
+            
+            document.getElementById('toggleCustomTea').addEventListener('click', () => {
+                const form = document.getElementById('customTeaForm');
+                form.style.display = form.style.display === 'none' ? 'block' : 'none';
+            });
+
+            updateDisplay();
+        });
+
+        // Export functions for use in other modules if needed
+        window.addCustomTea = addCustomTea;
+        window.updateDisplay = updateDisplay;
+    </script>
+</body>
+</html>
