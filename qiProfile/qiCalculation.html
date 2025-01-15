@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tea QI Profile Analyzer</title>
+    <style>
+        :root {
+            --primary-color: #2d3748;
+            --secondary-color: #4a5568;
+            --accent-color: #48bb78;
+            --bg-color: #f7fafc;
+            --card-bg: #ffffff;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            line-height: 1.5;
+            margin: 0;
+            padding: 2rem;
+            background-color: var(--bg-color);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        select {
+            padding: 0.5rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            background: white;
+            width: 100%;
+        }
+
+        .section {
+            background: var(--card-bg);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .qi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .qi-card {
+            background: white;
+            padding: 1rem;
+            border-radius: 6px;
+            border-left: 4px solid var(--accent-color);
+        }
+
+        .qi-bar {
+            background: #e2e8f0;
+            height: 12px;
+            border-radius: 6px;
+            overflow: hidden;
+            margin: 8px 0;
+        }
+
+        .qi-fill {
+            height: 100%;
+            background: var(--accent-color);
+            transition: width 0.3s ease;
+        }
+
+        .characteristic-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .tag {
+            background: #edf2f7;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+        }
+
+        .progression-timeline {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-top: 1rem;
+            position: relative;
+        }
+
+        .progression-timeline::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #e2e8f0;
+            z-index: 0;
+        }
+
+        .timeline-point {
+            background: white;
+            padding: 1rem;
+            border-radius: 6px;
+            border: 1px solid #e2e8f0;
+            position: relative;
+            z-index: 1;
+        }
+
+        h1, h2, h3, h4 {
+            color: var(--primary-color);
+            margin-top: 0;
+        }
+
+        .tea-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .detailed-description {
+            font-style: italic;
+            color: var(--secondary-color);
+            line-height: 1.6;
+            margin-top: 1rem;
+            padding: 1rem;
+            background: #f8fafc;
+            border-radius: 6px;
+        }
+
+        .temperature-bars {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .temperature-bars label {
+            display: block;
+            margin-bottom: 0.25rem;
+            font-size: 0.875rem;
+            color: var(--secondary-color);
+        }
+
+        .temperature-bars small {
+            display: block;
+            margin-top: 0.25rem;
+            font-size: 0.75rem;
+            color: var(--secondary-color);
+        }
+
+        .qi-fill.warming {
+            background: linear-gradient(90deg, #ed8936, #dd6b20);
+        }
+
+        .qi-fill.cooling {
+            background: linear-gradient(90deg, #4299e1, #2b6cb0);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Tea QI Profile Analyzer</h1>
+        
+        <div class="section controls">
+            <div>
+                <label for="teaSelect">Select Tea:</label>
+                <select id="teaSelect"></select>
+            </div>
+            <div>
+                <label for="typeFilter">Filter by Type:</label>
+                <select id="typeFilter">
+                    <option value="all">All Types</option>
+                    <option value="green">Green</option>
+                    <option value="black">Black</option>
+                    <option value="oolong">Oolong</option>
+                    <option value="white">White</option>
+                    <option value="puerh">Pu-erh</option>
+                    <option value="yellow">Yellow</option>
+                    <option value="herbal">Herbal</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="tea-info" id="teaInfo"></div>
+        </div>
+
+        <div class="section">
+            <h2>QI Profile Analysis</h2>
+            <div id="qiAnalysis"></div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { teaDatabase } from './database.js';
+        import { QiCalculator } from './qiCalculator.js';
+
+        function populateTeaSelect() {
+            const select = document.getElementById('teaSelect');
+            const typeFilter = document.getElementById('typeFilter').value;
+            
+            let filteredTeas = teaDatabase;
+            if (typeFilter !== 'all') {
+                filteredTeas = teaDatabase.filter(tea => tea.type.toLowerCase() === typeFilter.toLowerCase());
+            }
+
+            select.innerHTML = filteredTeas.map(tea => `
+                <option value="${tea.name}">${tea.name} ${tea.originalName ? `(${tea.originalName})` : ''}</option>
+            `).join('');
+
+            updateDisplay();
+        }
+
+        function updateDisplay() {
+            const selectedTea = teaDatabase.find(tea => 
+                tea.name === document.getElementById('teaSelect').value
+            );
+
+            if (!selectedTea) return;
+
+            // Update Tea Info
+            document.getElementById('teaInfo').innerHTML = `
+                <div>
+                    <h3>Basic Information</h3>
+                    <p><strong>Name:</strong> ${selectedTea.name}</p>
+                    <p><strong>Original Name:</strong> ${selectedTea.originalName || 'N/A'}</p>
+                    <p><strong>Type:</strong> ${selectedTea.type}</p>
+                    <p><strong>Origin:</strong> ${selectedTea.origin}</p>
+                </div>
+                <div>
+                    <h3>Compound Levels</h3>
+                    <p><strong>Caffeine Level:</strong> ${selectedTea.caffeineLevel || 'N/A'}${selectedTea.caffeineLevel ? '/10' : ''}</p>
+                    <p><strong>L-Theanine Level:</strong> ${selectedTea.lTheanineLevel || 'N/A'}${selectedTea.lTheanineLevel ? '/10' : ''}</p>
+                    <p><strong>Ratio:</strong> ${selectedTea.lTheanineLevel && selectedTea.caffeineLevel ? 
+                        (selectedTea.lTheanineLevel / selectedTea.caffeineLevel).toFixed(2) : 'N/A'}</p>
+                </div>
+                <div>
+                    <h3>Processing Methods</h3>
+                    <div class="characteristic-tags">
+                        ${selectedTea.processingMethods.map(method => 
+                            `<span class="tag">${method}</span>`
+                        ).join('')}
+                    </div>
+                </div>
+            `;
+
+            // Calculate and display QI profile
+            const calculator = new QiCalculator(selectedTea);
+            const qiProfile = calculator.calculate();
+
+            document.getElementById('qiAnalysis').innerHTML = `
+                <div class="qi-grid">
+                    <div class="qi-card ${qiProfile.category}">
+                        <h3>QI Temperature Balance</h3>
+                        <p>Category: ${qiProfile.category.charAt(0).toUpperCase() + qiProfile.category.slice(1)}</p>
+                        <div class="temperature-bars">
+                            <div>
+                                <label>Warming Energy</label>
+                                <div class="qi-bar">
+                                    <div class="qi-fill warming" 
+                                         style="width: ${qiProfile.temperatureBalance?.warmingPercent || 0}%"></div>
+                                </div>
+                                <small>${qiProfile.temperatureBalance?.warmingScore || 0} points (${qiProfile.temperatureBalance?.warmingPercent || 0}%)</small>
+                            </div>
+                            <div>
+                                <label>Cooling Energy</label>
+                                <div class="qi-bar">
+                                    <div class="qi-fill cooling" 
+                                         style="width: ${qiProfile.temperatureBalance?.coolingPercent || 0}%"></div>
+                                </div>
+                                <small>${qiProfile.temperatureBalance?.coolingScore || 0} points (${qiProfile.temperatureBalance?.coolingPercent || 0}%)</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="qi-card">
+                        <h3>Energy Characteristics</h3>
+                        <p><strong>Body Focus:</strong> ${qiProfile.bodyFocus}</p>
+                        <p><strong>Energy Flow:</strong> ${qiProfile.energyFlow}</p>
+                        <div class="characteristic-tags">
+                            ${qiProfile.characteristics.map(char => 
+                                `<span class="tag">${char}</span>`
+                            ).join('')}
+                        </div>
+                    </div>
+
+                    <div class="qi-card">
+                        <h3>Mental Effects</h3>
+                        <div class="characteristic-tags">
+                            ${Array.isArray(qiProfile.mentalEffects) ? 
+                                qiProfile.mentalEffects.map(effect => 
+                                    `<span class="tag">${effect}</span>`
+                                ).join('') : ''}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h3>QI Progression</h3>
+                    <div class="progression-timeline">
+                        <div class="timeline-point">
+                            <h4>Initial Phase</h4>
+                            <div class="characteristic-tags">
+                                ${qiProfile.progression.initial.map(char => 
+                                    `<span class="tag">${char}</span>`
+                                ).join('')}
+                            </div>
+                        </div>
+                        <div class="timeline-point">
+                            <h4>Peak Phase</h4>
+                            <div class="characteristic-tags">
+                                ${qiProfile.progression.peak.map(char => 
+                                    `<span class="tag">${char}</span>`
+                                ).join('')}
+                            </div>
+                            <p>${qiProfile.peakTiming}</p>
+                        </div>
+                        <div class="timeline-point">
+                            <h4>Finish Phase</h4>
+                            <div class="characteristic-tags">
+                                ${qiProfile.progression.finish.map(char => 
+                                    `<span class="tag">${char}</span>`
+                                ).join('')}
+                            </div>
+                            <p>${qiProfile.duration}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="detailed-description">
+                    ${qiProfile.detailedDescription}
+                </div>
+            `;
+        }
+
+        // Event Listeners
+        document.getElementById('teaSelect').addEventListener('change', updateDisplay);
+        document.getElementById('typeFilter').addEventListener('change', populateTeaSelect);
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', populateTeaSelect);
+    </script>
+</body>
+</html>

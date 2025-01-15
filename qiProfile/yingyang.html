@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tea QI Profile Analyzer</title>
+    <style>
+        :root {
+            --primary-color: #2d3748;
+            --secondary-color: #4a5568;
+            --accent-color: #48bb78;
+            --bg-color: #f7fafc;
+            --card-bg: #ffffff;
+            --wood-color: #68D391;
+            --fire-color: #F6AD55;
+            --earth-color: #B7791F;
+            --metal-color: #CBD5E0;
+            --water-color: #63B3ED;
+            --yin-color: #4299E1;
+            --yang-color: #F6AD55;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            line-height: 1.5;
+            margin: 0;
+            padding: 2rem;
+            background-color: var(--bg-color);
+            color: var(--primary-color);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        select {
+            padding: 0.5rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            background: white;
+            width: 100%;
+        }
+
+        .section {
+            background: var(--card-bg);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .qi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .qi-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 6px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+
+        .qi-bar {
+            background: #e2e8f0;
+            height: 12px;
+            border-radius: 6px;
+            overflow: hidden;
+            margin: 8px 0;
+        }
+
+        .qi-fill {
+            height: 100%;
+            transition: width 0.3s ease;
+        }
+
+        .qi-fill.warming {
+            background: linear-gradient(90deg, #F6AD55, #ED8936);
+        }
+
+        .qi-fill.cooling {
+            background: linear-gradient(90deg, #63B3ED, #4299E1);
+        }
+
+        .qi-fill.wood {
+            background: linear-gradient(90deg, #68D391, #38A169);
+        }
+
+        .qi-fill.fire {
+            background: linear-gradient(90deg, #F6AD55, #DD6B20);
+        }
+
+        .qi-fill.earth {
+            background: linear-gradient(90deg, #D69E2E, #B7791F);
+        }
+
+        .qi-fill.metal {
+            background: linear-gradient(90deg, #CBD5E0, #A0AEC0);
+        }
+
+        .qi-fill.water {
+            background: linear-gradient(90deg, #63B3ED, #3182CE);
+        }
+
+        .qi-fill.yin {
+            background: linear-gradient(90deg, #4299E1, #2B6CB0);
+        }
+
+        .qi-fill.yang {
+            background: linear-gradient(90deg, #F6AD55, #DD6B20);
+        }
+
+        .characteristic-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .tag {
+            background: #edf2f7;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+        }
+
+        .tag.wood { background-color: #C6F6D5; }
+        .tag.fire { background-color: #FEEBC8; }
+        .tag.earth { background-color: #FEFCBF; }
+        .tag.metal { background-color: #E2E8F0; }
+        .tag.water { background-color: #BEE3F8; }
+        .tag.yin { background-color: #BEE3F8; }
+        .tag.yang { background-color: #FEEBC8; }
+
+        .progression-timeline {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-top: 1rem;
+            position: relative;
+        }
+
+        .progression-timeline::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #e2e8f0;
+            z-index: 0;
+        }
+
+        .timeline-point {
+            background: white;
+            padding: 1rem;
+            border-radius: 6px;
+            border: 1px solid #e2e8f0;
+            position: relative;
+            z-index: 1;
+        }
+
+        .tea-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .detailed-description {
+            font-style: italic;
+            color: var(--secondary-color);
+            line-height: 1.6;
+            margin-top: 1rem;
+            padding: 1rem;
+            background: #f8fafc;
+            border-radius: 6px;
+        }
+
+        h1, h2, h3, h4 {
+            color: var(--primary-color);
+            margin-top: 0;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.25rem;
+            color: var(--secondary-color);
+        }
+
+        small {
+            color: var(--secondary-color);
+            font-size: 0.875rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Tea QI Profile Analyzer</h1>
+        
+        <!-- Controls Section -->
+        <div class="section controls">
+            <div>
+                <label for="teaSelect">Select Tea:</label>
+                <select id="teaSelect"></select>
+            </div>
+            <div>
+                <label for="typeFilter">Filter by Type:</label>
+                <select id="typeFilter">
+                    <option value="all">All Types</option>
+                    <option value="green">Green</option>
+                    <option value="black">Black</option>
+                    <option value="oolong">Oolong</option>
+                    <option value="white">White</option>
+                    <option value="puerh">Pu-erh</option>
+                    <option value="yellow">Yellow</option>
+                    <option value="herbal">Herbal</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Tea Info Section -->
+        <div class="section">
+            <h2>Basic Information</h2>
+            <div class="tea-info" id="teaInfo"></div>
+        </div>
+
+        <!-- QI Analysis Section -->
+        <div class="section">
+            <h2>QI Profile Analysis</h2>
+            
+            <div class="qi-grid">
+                <!-- Temperature Balance -->
+                <div class="qi-card">
+                    <h3>Temperature Balance</h3>
+                    <div>
+                        <label>Warming Energy</label>
+                        <div class="qi-bar">
+                            <div class="qi-fill warming" id="warmingBar"></div>
+                        </div>
+                        <small id="warmingScore"></small>
+                    </div>
+                    <div>
+                        <label>Cooling Energy</label>
+                        <div class="qi-bar">
+                            <div class="qi-fill cooling" id="coolingBar"></div>
+                        </div>
+                        <small id="coolingScore"></small>
+                    </div>
+                </div>
+
+                <!-- Five Phases Analysis -->
+                <div class="qi-card">
+                    <h3>Five Phase Analysis (五行)</h3>
+                    <div class="five-phases" id="fivePhases">
+                        <!-- Five phase bars will be inserted here -->
+                    </div>
+                    <div class="phase-characteristics" id="phaseCharacteristics">
+                        <!-- Phase characteristics will be inserted here -->
+                    </div>
+                </div>
+
+                <!-- Yin-Yang Balance -->
+                <div class="qi-card">
+                    <h3>Yin-Yang Balance (陰陽)</h3>
+                    <div>
+                        <label>Yang Energy (陽)</label>
+                        <div class="qi-bar">
+                            <div class="qi-fill yang" id="yangBar"></div>
+                        </div>
+                        <small id="yangScore"></small>
+                    </div>
+                    <div>
+                        <label>Yin Energy (陰)</label>
+                        <div class="qi-bar">
+                            <div class="qi-fill yin" id="yinBar"></div>
+                        </div>
+                        <small id="yinScore"></small>
+                    </div>
+                    <div class="characteristic-tags" id="yinYangCharacteristics">
+                        <!-- Yin-Yang characteristics will be inserted here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Progression Timeline -->
+            <div class="section">
+                <h3>QI Progression</h3>
+                <div class="progression-timeline">
+                    <div class="timeline-point">
+                        <h4>Initial Phase</h4>
+                        <div class="characteristic-tags" id="initialPhase">
+                            <!-- Initial phase characteristics will be inserted here -->
+                        </div>
+                    </div>
+                    <div class="timeline-point">
+                        <h4>Peak Phase</h4>
+                        <div class="characteristic-tags" id="peakPhase">
+                            <!-- Peak phase characteristics will be inserted here -->
+                        </div>
+                        <p id="peakTiming"></p>
+                    </div>
+                    <div class="timeline-point">
+                        <h4>Finish Phase</h4>
+                        <div class="characteristic-tags" id="finishPhase">
+                            <!-- Finish phase characteristics will be inserted here -->
+                        </div>
+                        <p id="duration"></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detailed Description -->
+            <div class="section">
+                <h3>Complete Analysis</h3>
+                <div class="detailed-description" id="detailedDescription">
+                    <!-- Detailed description will be inserted here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { teaDatabase } from './database.js';
+        import { QiCalculator } from './qiCalculator.js';
+
+        function populateTeaSelect() {
+            const select = document.getElementById('teaSelect');
+            const typeFilter = document.getElementById('typeFilter').value;
+            
+            let filteredTeas = teaDatabase;
+            if (typeFilter !== 'all') {
+                filteredTeas = teaDatabase.filter(tea => tea.type.toLowerCase() === typeFilter.toLowerCase());
+            }
+
+            select.innerHTML = filteredTeas.map(tea => `
+                <option value="${tea.name}">${tea.name} ${tea.originalName ? `(${tea.originalName})` : ''}</option>
+            `).join('');
+
+            updateDisplay();
+        }
+
+        function updateDisplay() {
+            const selectedTea = teaDatabase.find(tea => 
+                tea.name === document.getElementById('teaSelect').value
+            );
+
+            if (!selectedTea) return;
+
+            // Update Tea Info
+            document.getElementById('teaInfo').innerHTML = `
+                <div>
+                    <h3>Basic Information</h3>
+                    <p><strong>Name:</strong> ${selectedTea.name}</p>
+                    <p><strong>Original Name:</strong> ${selectedTea.originalName || 'N/A'}</p>
+                    <p><strong>Type:</strong> ${selectedTea.type}</p>
+                    <p><strong>Origin:</strong> ${selectedTea.origin}</p>
+                </div>
+                <div>
+                    <h3>Compound Levels</h3>
+                    <p><strong>Caffeine Level:</strong> ${selectedTea.caffeineLevel || 'N/A'}${selectedTea.caffeineLevel ? '/10' : ''}</p>
+                    <p><strong>L-Theanine Level:</strong> ${selectedTea.lTheanineLevel || 'N/A'}${selectedTea.lTheanineLevel ? '/10' : ''}</p>
+                    <p><strong>Ratio:</strong> ${selectedTea.lTheanineLevel && selectedTea.caffeineLevel ? 
+                        (selectedTea.lTheanineLevel / selectedTea.caffeineLevel).toFixed(2) : 'N/A'}</p>
+                </div>
+                <div>
+                    <h3>Processing Methods</h3>
+                    <div class="characteristic-tags">
+                        ${selectedTea.processingMethods.map(method => 
+                            `<span class="tag">${method}</span>`
+                        ).join('')}
+                    </div>
+                </div>
+            `;
+
+            // Calculate QI profile
+            const calculator = new QiCalculator(selectedTea);
+            const qiProfile = calculator.calculate();
+
+            // Update Temperature Balance
+            const tempBalance = qiProfile.temperatureBalance || { warmingPercent: 0, coolingPercent: 0, warmingScore: 0, coolingScore: 0 };
+            document.getElementById('warmingBar').style.width = `${tempBalance.warmingPercent}%`;
+            document.getElementById('coolingBar').style.width = `${tempBalance.coolingPercent}%`;
+            document.getElementById('warmingScore').textContent = 
+                `${tempBalance.warmingScore} points (${tempBalance.warmingPercent}%)`;
+            document.getElementById('coolingScore').textContent = 
+                `${tempBalance.coolingScore} points (${tempBalance.coolingPercent}%)`;
+
+            // Update Five Phases
+            document.getElementById('fivePhases').innerHTML = Object.entries(qiProfile.fivePhases.scores)
+                .map(([phase, score]) => `
+                    <div class="phase-bar">
+                        <label>${phase.charAt(0).toUpperCase() + phase.slice(1)} Phase</label>
+                        <div class="qi-bar">
+                            <div class="qi-fill ${phase}" 
+                                 style="width: ${(score / Object.values(qiProfile.fivePhases.scores)
+                                               .reduce((a, b) => a + b, 0)) * 100}%">
+                            </div>
+                        </div>
+                        <small>${parseFloat(score).toFixed(1)} points</small>
+                    </div>
+                `).join('');
+
+            document.getElementById('phaseCharacteristics').innerHTML = `
+                <p><strong>Dominant:</strong> ${qiProfile.fivePhases.dominant} phase</p>
+                <p><strong>Supporting:</strong> ${qiProfile.fivePhases.supporting} phase</p>
+                <div class="characteristic-tags">
+                    ${qiProfile.fivePhases.characteristics.map(char => 
+                        `<span class="tag ${qiProfile.fivePhases.dominant}">${char.characteristic}</span>`
+                    ).join('')}
+                </div>
+            `;
+
+            // Update Yin-Yang Balance
+            document.getElementById('yangBar').style.width = `${qiProfile.yinYangBalance.yangPercent}%`;
+            document.getElementById('yinBar').style.width = `${qiProfile.yinYangBalance.yinPercent}%`;
+            document.getElementById('yangScore').textContent = 
+                `${qiProfile.yinYangBalance.yangScore} points (${qiProfile.yinYangBalance.yangPercent}%)`;
+            document.getElementById('yinScore').textContent = 
+                `${qiProfile.yinYangBalance.yinScore} points (${qiProfile.yinYangBalance.yinPercent}%)`;
+
+            document.getElementById('yinYangCharacteristics').innerHTML = 
+                qiProfile.yinYangBalance.characteristics.map(char => 
+                    `<span class="tag ${qiProfile.yinYangBalance.dominantAspect}">${char}</span>`
+                ).join('');
+
+            // Update Progression Timeline
+            document.getElementById('initialPhase').innerHTML = 
+                qiProfile.progression.initial.map(char => 
+                    `<span class="tag">${char}</span>`
+                ).join('');
+
+            document.getElementById('peakPhase').innerHTML = 
+                qiProfile.progression.peak.map(char => 
+                    `<span class="tag">${char}</span>`
+                ).join('');
+            document.getElementById('peakTiming').textContent = qiProfile.peakTiming;
+
+            document.getElementById('finishPhase').innerHTML = 
+                qiProfile.progression.finish.map(char => 
+                    `<span class="tag">${char}</span>`
+                ).join('');
+            document.getElementById('duration').textContent = qiProfile.duration;
+
+            // Update Detailed Description
+            document.getElementById('detailedDescription').textContent = qiProfile.detailedDescription;
+        }
+
+        // Event Listeners
+        document.getElementById('teaSelect').addEventListener('change', updateDisplay);
+        document.getElementById('typeFilter').addEventListener('change', populateTeaSelect);
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', populateTeaSelect);
+    </script>
+</body>
+</html>
