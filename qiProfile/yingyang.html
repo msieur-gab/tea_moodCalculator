@@ -83,42 +83,6 @@
             transition: width 0.3s ease;
         }
 
-        .qi-fill.warming {
-            background: linear-gradient(90deg, #F6AD55, #ED8936);
-        }
-
-        .qi-fill.cooling {
-            background: linear-gradient(90deg, #63B3ED, #4299E1);
-        }
-
-        .qi-fill.wood {
-            background: linear-gradient(90deg, #68D391, #38A169);
-        }
-
-        .qi-fill.fire {
-            background: linear-gradient(90deg, #F6AD55, #DD6B20);
-        }
-
-        .qi-fill.earth {
-            background: linear-gradient(90deg, #D69E2E, #B7791F);
-        }
-
-        .qi-fill.metal {
-            background: linear-gradient(90deg, #CBD5E0, #A0AEC0);
-        }
-
-        .qi-fill.water {
-            background: linear-gradient(90deg, #63B3ED, #3182CE);
-        }
-
-        .qi-fill.yin {
-            background: linear-gradient(90deg, #4299E1, #2B6CB0);
-        }
-
-        .qi-fill.yang {
-            background: linear-gradient(90deg, #F6AD55, #DD6B20);
-        }
-
         .characteristic-tags {
             display: flex;
             flex-wrap: wrap;
@@ -132,14 +96,6 @@
             border-radius: 9999px;
             font-size: 0.875rem;
         }
-
-        .tag.wood { background-color: #C6F6D5; }
-        .tag.fire { background-color: #FEEBC8; }
-        .tag.earth { background-color: #FEFCBF; }
-        .tag.metal { background-color: #E2E8F0; }
-        .tag.water { background-color: #BEE3F8; }
-        .tag.yin { background-color: #BEE3F8; }
-        .tag.yang { background-color: #FEEBC8; }
 
         .progression-timeline {
             display: grid;
@@ -173,7 +129,6 @@
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 1rem;
-            margin-bottom: 1rem;
         }
 
         .detailed-description {
@@ -184,6 +139,12 @@
             padding: 1rem;
             background: #f8fafc;
             border-radius: 6px;
+        }
+
+        .temperature-bars {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
         }
 
         h1, h2, h3, h4 {
@@ -201,13 +162,31 @@
             color: var(--secondary-color);
             font-size: 0.875rem;
         }
+
+        /* Element-specific styles */
+        .qi-fill.warming { background: linear-gradient(90deg, #F6AD55, #DD6B20); }
+        .qi-fill.cooling { background: linear-gradient(90deg, #63B3ED, #4299E1); }
+        .qi-fill.wood { background: linear-gradient(90deg, #68D391, #38A169); }
+        .qi-fill.fire { background: linear-gradient(90deg, #F6AD55, #DD6B20); }
+        .qi-fill.earth { background: linear-gradient(90deg, #D69E2E, #B7791F); }
+        .qi-fill.metal { background: linear-gradient(90deg, #CBD5E0, #A0AEC0); }
+        .qi-fill.water { background: linear-gradient(90deg, #63B3ED, #3182CE); }
+        .qi-fill.yin { background: linear-gradient(90deg, #4299E1, #2B6CB0); }
+        .qi-fill.yang { background: linear-gradient(90deg, #F6AD55, #DD6B20); }
+
+        .tag.wood { background-color: #C6F6D5; }
+        .tag.fire { background-color: #FEEBC8; }
+        .tag.earth { background-color: #FEFCBF; }
+        .tag.metal { background-color: #E2E8F0; }
+        .tag.water { background-color: #BEE3F8; }
+        .tag.yin { background-color: #BEE3F8; }
+        .tag.yang { background-color: #FEEBC8; }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Tea QI Profile Analyzer</h1>
         
-        <!-- Controls Section -->
         <div class="section controls">
             <div>
                 <label for="teaSelect">Select Tea:</label>
@@ -228,13 +207,11 @@
             </div>
         </div>
 
-        <!-- Tea Info Section -->
         <div class="section">
             <h2>Basic Information</h2>
             <div class="tea-info" id="teaInfo"></div>
         </div>
 
-        <!-- QI Analysis Section -->
         <div class="section">
             <h2>QI Profile Analysis</h2>
             
@@ -242,23 +219,25 @@
                 <!-- Temperature Balance -->
                 <div class="qi-card">
                     <h3>Temperature Balance</h3>
-                    <div>
-                        <label>Warming Energy</label>
-                        <div class="qi-bar">
-                            <div class="qi-fill warming" id="warmingBar"></div>
+                    <div class="temperature-bars">
+                        <div>
+                            <label>Warming Energy</label>
+                            <div class="qi-bar">
+                                <div class="qi-fill warming" id="warmingBar"></div>
+                            </div>
+                            <small id="warmingScore"></small>
                         </div>
-                        <small id="warmingScore"></small>
-                    </div>
-                    <div>
-                        <label>Cooling Energy</label>
-                        <div class="qi-bar">
-                            <div class="qi-fill cooling" id="coolingBar"></div>
+                        <div>
+                            <label>Cooling Energy</label>
+                            <div class="qi-bar">
+                                <div class="qi-fill cooling" id="coolingBar"></div>
+                            </div>
+                            <small id="coolingScore"></small>
                         </div>
-                        <small id="coolingScore"></small>
                     </div>
                 </div>
 
-                <!-- Five Phases Analysis -->
+                <!-- Five Phase Analysis -->
                 <div class="qi-card">
                     <h3>Five Phase Analysis (五行)</h3>
                     <div class="five-phases" id="fivePhases">
@@ -272,19 +251,21 @@
                 <!-- Yin-Yang Balance -->
                 <div class="qi-card">
                     <h3>Yin-Yang Balance (陰陽)</h3>
-                    <div>
-                        <label>Yang Energy (陽)</label>
-                        <div class="qi-bar">
-                            <div class="qi-fill yang" id="yangBar"></div>
+                    <div class="yin-yang-balance">
+                        <div>
+                            <label>Yang Energy (陽)</label>
+                            <div class="qi-bar">
+                                <div class="qi-fill yang" id="yangBar"></div>
+                            </div>
+                            <small id="yangScore"></small>
                         </div>
-                        <small id="yangScore"></small>
-                    </div>
-                    <div>
-                        <label>Yin Energy (陰)</label>
-                        <div class="qi-bar">
-                            <div class="qi-fill yin" id="yinBar"></div>
+                        <div>
+                            <label>Yin Energy (陰)</label>
+                            <div class="qi-bar">
+                                <div class="qi-fill yin" id="yinBar"></div>
+                            </div>
+                            <small id="yinScore"></small>
                         </div>
-                        <small id="yinScore"></small>
                     </div>
                     <div class="characteristic-tags" id="yinYangCharacteristics">
                         <!-- Yin-Yang characteristics will be inserted here -->
@@ -292,7 +273,7 @@
                 </div>
             </div>
 
-            <!-- Progression Timeline -->
+            <!-- Energy Progression -->
             <div class="section">
                 <h3>QI Progression</h3>
                 <div class="progression-timeline">
@@ -331,7 +312,7 @@
 
     <script type="module">
         import { teaDatabase } from './database.js';
-        import { QiCalculator } from './qiCalculator.js';
+        import { QiCalculator } from './qiCalculatorV2.js';
 
         function populateTeaSelect() {
             const select = document.getElementById('teaSelect');
@@ -396,63 +377,77 @@
                 `${tempBalance.coolingScore} points (${tempBalance.coolingPercent}%)`;
 
             // Update Five Phases
-            document.getElementById('fivePhases').innerHTML = Object.entries(qiProfile.fivePhases.scores)
+            // Update Five Phases
+            const fivePhases = qiProfile.fivePhases || { scores: {}, dominant: '', supporting: '', characteristics: [] };
+            const totalScore = Object.values(fivePhases.scores).reduce((a, b) => a + b, 0) || 1; // Prevent division by zero
+
+            document.getElementById('fivePhases').innerHTML = Object.entries(fivePhases.scores)
                 .map(([phase, score]) => `
                     <div class="phase-bar">
                         <label>${phase.charAt(0).toUpperCase() + phase.slice(1)} Phase</label>
                         <div class="qi-bar">
                             <div class="qi-fill ${phase}" 
-                                 style="width: ${(score / Object.values(qiProfile.fivePhases.scores)
-                                               .reduce((a, b) => a + b, 0)) * 100}%">
+                                 style="width: ${(score / totalScore) * 100}%">
                             </div>
                         </div>
-                        <small>${parseFloat(score).toFixed(1)} points</small>
+                        <small>${parseFloat(score || 0).toFixed(1)} points</small>
                     </div>
                 `).join('');
 
             document.getElementById('phaseCharacteristics').innerHTML = `
-                <p><strong>Dominant:</strong> ${qiProfile.fivePhases.dominant} phase</p>
-                <p><strong>Supporting:</strong> ${qiProfile.fivePhases.supporting} phase</p>
+                <p><strong>Dominant:</strong> ${fivePhases.dominant || 'balanced'} phase</p>
+                <p><strong>Supporting:</strong> ${fivePhases.supporting || 'neutral'} phase</p>
                 <div class="characteristic-tags">
-                    ${qiProfile.fivePhases.characteristics.map(char => 
-                        `<span class="tag ${qiProfile.fivePhases.dominant}">${char.characteristic}</span>`
+                    ${(fivePhases.characteristics || []).map(char => 
+                        `<span class="tag ${fivePhases.dominant}">${char.characteristic}</span>`
                     ).join('')}
                 </div>
             `;
 
             // Update Yin-Yang Balance
-            document.getElementById('yangBar').style.width = `${qiProfile.yinYangBalance.yangPercent}%`;
-            document.getElementById('yinBar').style.width = `${qiProfile.yinYangBalance.yinPercent}%`;
+            const yinYang = qiProfile.yinYangBalance || {
+                yangPercent: 50,
+                yinPercent: 50,
+                yangScore: 0,
+                yinScore: 0,
+                characteristics: [],
+                dominantAspect: 'balanced'
+            };
+
+            document.getElementById('yangBar').style.width = `${yinYang.yangPercent}%`;
+            document.getElementById('yinBar').style.width = `${yinYang.yinPercent}%`;
             document.getElementById('yangScore').textContent = 
-                `${qiProfile.yinYangBalance.yangScore} points (${qiProfile.yinYangBalance.yangPercent}%)`;
+                `${yinYang.yangScore} points (${yinYang.yangPercent}%)`;
             document.getElementById('yinScore').textContent = 
-                `${qiProfile.yinYangBalance.yinScore} points (${qiProfile.yinYangBalance.yinPercent}%)`;
+                `${yinYang.yinScore} points (${yinYang.yinPercent}%)`;
 
             document.getElementById('yinYangCharacteristics').innerHTML = 
-                qiProfile.yinYangBalance.characteristics.map(char => 
-                    `<span class="tag ${qiProfile.yinYangBalance.dominantAspect}">${char}</span>`
+                (yinYang.characteristics || []).map(char => 
+                    `<span class="tag ${yinYang.dominantAspect}">${char}</span>`
                 ).join('');
 
             // Update Progression Timeline
+            const progression = qiProfile.progression || { initial: [], peak: [], finish: [] };
+            
             document.getElementById('initialPhase').innerHTML = 
-                qiProfile.progression.initial.map(char => 
+                (progression.initial || []).map(char => 
                     `<span class="tag">${char}</span>`
                 ).join('');
 
             document.getElementById('peakPhase').innerHTML = 
-                qiProfile.progression.peak.map(char => 
+                (progression.peak || []).map(char => 
                     `<span class="tag">${char}</span>`
                 ).join('');
-            document.getElementById('peakTiming').textContent = qiProfile.peakTiming;
+            document.getElementById('peakTiming').textContent = qiProfile.peakTiming || '';
 
             document.getElementById('finishPhase').innerHTML = 
-                qiProfile.progression.finish.map(char => 
+                (progression.finish || []).map(char => 
                     `<span class="tag">${char}</span>`
                 ).join('');
-            document.getElementById('duration').textContent = qiProfile.duration;
+            document.getElementById('duration').textContent = qiProfile.duration || '';
 
             // Update Detailed Description
-            document.getElementById('detailedDescription').textContent = qiProfile.detailedDescription;
+            document.getElementById('detailedDescription').textContent = qiProfile.detailedDescription || 'Analysis in progress...';
         }
 
         // Event Listeners
